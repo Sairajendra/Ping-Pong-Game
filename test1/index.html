@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+
+
+</body>
+</html>
+
+<style>
+    
+    body {
+        background-color: white;
+        
+    }
+    
+    * {
+        max-width: 99%;
+        max-height: 100%;
+    }
+    
+    #gamepic {
+        display: block;
+        position: absolute;
+        border-radius: 100px;
+        width: 100%;
+        height: 100%;
+        margin-top: 300px;
+    }
+    
+    #play {
+        position: absolute;
+        margin-top: 40px;
+        margin-left: 30px;
+    }
+    
+    #start {
+        text-align: center;
+        font-size: 100px;
+        font-family: arial;
+        display: block;
+        position: absolute;
+        margin-top: 1000px;
+        margin-left: 210px;
+        padding: 10px 20px;
+        
+    }
+    
+    h2 {
+        position: absolute;
+        margin-top: -600px;
+        margin-left: 30px;
+        font-size: 60px;
+        font-family: arial;
+        font-weight: 400;
+    }
+    
+   canvas {
+    display: hidden;
+    border-left: 8px solid gray;
+    border-right: 8px solid gray; 
+    border-top: 10px solid black; 
+    border-bottom: 10px solid black; 
+    background-color: PaleVioletRed;
+}
+    
+    #buttons {
+        display: flex;
+        justify-content: center;
+        padding: 50px 100px;
+        margin-top: 100px;
+        font-size: 50px;
+        font-weight: bold;
+    }
+    
+    #buttons {
+        display: none;
+        margin-left: 120px;
+    }
+    
+    #buttons > button {
+        text-align: center;
+        padding: 50px 100px;
+        font-size: 50px;
+        
+    }
+    
+    #buttons > button:active {
+        background-color: lightblue;
+    }
+    
+    #restart > button {
+        padding: 40px 160px;
+        position: absolute;
+        margin-top: -240px;
+        margin-left: 270px;
+        font-size: 60px;
+        font-weight: bold;
+        font-family: verdana;
+    }
+    
+    #restart {
+        display: none;
+    }
+    
+    #Help {
+        display: block;
+        position: absolute;
+        margin-top: 1200px;
+        margin-left: 390px;
+        font-size: 70px;
+        z-index: 2;
+    }
+    #description {
+        display: none;
+        margin-left: -350px;
+        margin-top: -1000px;
+        min-width: 99%;
+        background-color: lightsteelblue;
+        padding: 100px 150px 0px 150px;
+        box-shadow: 10px 10px 10px black;
+        font-family: arial;
+    }
+    
+    
+    
+    #inc {
+        
+        
+        padding: 20px;
+        position: absolute;
+        margin-left: 550px;
+        margin-top: -100px;
+        width: 100px;
+        height: 100px;
+        
+    }
+    
+    .close {
+        font-size: 100px;
+        font-weight: bold;
+        position: absolute;
+        margin-left: 820px;
+        margin-top: -100px;
+        border: 5px solid black;
+        padding: 0px 10px;
+    }
+    
+    .close:active {
+        background-color: red;
+    }
+    
+    
+    
+</style>
+
+<script>
+    
+    var player;
+    var computer;
+    var ball;
+    var myScore;
+    var gameOver;
+    var collide;
+    var over;
+    var click;
+    var music;
+    var well;
+    var line;
+    var wish;
+    
+    
+    paddleWidth = 220;
+    
+    function startGame() {
+      myGameArea.start();
+      player = new component(paddleWidth, 20, "paddle.png", 350, 1250, "image");
+      computer = new component(250, 20, "paddle.png", 350, 20, "image");
+      ball = new component(40, 40, "dry-clean.png", 450, 40, "image");
+      myScore = new component("40px", "Consolas", "black", 700, 100, "text");
+      well = new component("40px", "Consolas", "black", 320, 500, "text");
+      wish = new component("60px", "Consolas", "black", 300, 600, "text");
+      gameOver = new component("70px", "Consolas", "black", 300, 600, "text");
+      line = new component(950, 5, "black", 10, 670);
+      collide = new sound("glass.ogg");
+      over = new sound("scratch.ogg");
+      click = new sound("switchh.ogg");
+      music = new sound("upbeat.mp3");
+      startHidden();
+      document.getElementById("buttons").style.display = "block";
+      document.getElementById("gamepic").style.display = "none";
+      music.play();
+      document.getElementById("help").style.display = "none";
+    }
+
+    var myGameArea = {
+      canvas : document.createElement("canvas"),
+      start : function() {
+        this.canvas.width = 950;
+        this.canvas.height = 1300;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.frameNo = 0;
+        this.interval = setInterval(updateGameArea, 20);
+      },
+      clear : function() {
+          this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      },
+      stop : function() {
+          clearInterval(this.interval);
+      }
+    }
+    
+    function everyinterval(n) {
+      if ((myGameArea.frameNo / n) % 1 == 0) {return true;}
+      return false;
+    }
+    
+    function component(width, height, color, x, y, type) {
+        this.type = type;
+        if (type == "image") {
+            this.image = new Image();
+            this.image.src = color;
+          }
+        this.width = width;
+        this.height = height;
+        this.x = x;
+        this.y = y;
+        this.update = function() {
+            ctx = myGameArea.context;
+            if (this.type == "text") {
+              ctx.font = this.width + " " + this.height;
+              ctx.fillStyle = color;
+              ctx.fillText(this.text, this.x, this.y);
+            } else if (type == "image") {
+              ctx.drawImage(this.image,
+                this.x,
+                this.y,
+                this.width, this.height);
+            } else {
+              ctx.fillStyle = color;
+              ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+        }
+        this.crashWith = function(otherobj) {
+            var myleft = this.x;
+            var myright = this.x + (this.width);
+            var mytop = this.y;
+            var mybottom = this.y + (this.height);
+            var otherleft = player.x;
+            var otherright = player.x + (player.width);
+            var othertop = player.y;
+            var otherbottom = player.y + (player.height);
+            var crash = true;
+            if ((mybottom < othertop) ||
+            (mytop > otherbottom) ||
+            (myright < otherleft) ||
+            (myleft > otherright)) {
+              crash = false;
+            }
+            return crash;
+          }
+    }
+    
+    
+    
+    function updateGameArea() {
+                var x, y;
+                
+        
+                myGameArea.clear();
+                x = myGameArea.canvas.width;
+                y = myGameArea.canvas.height - 200
+                num = 0;
+                myGameArea.frameNo += 1;
+                player.update();
+                computer.update();
+                if (myGameArea.frameNo > 70) {
+                    ball.update();
+                    ballMove();
+                }
+                if (myGameArea.frameNo > 10 && myGameArea.frameNo < 60) {
+                wish.text = "Play Well! 😎";
+                wish.update();
+            }
+                myScore.text = "SCORE: " + scr;
+                myScore.update();
+                bound();
+                line.update();
+        
+                
+          
+    }
+    
+    function sound(src) {
+      this.sound = document.createElement("audio");
+      this.sound.src = src;
+      this.sound.setAttribute("preload", "auto");
+      this.sound.setAttribute("controls", "none");
+      this.sound.style.display = "none";
+      document.body.appendChild(this.sound);
+      this.play = function(){
+        this.sound.play();
+      }
+      this.stop = function(){
+        this.sound.pause();
+      }
+    }
+    
+    
+    function moveLeft() {
+        player.x -= 152;
+        click.play();
+    }
+    
+    function moveRight() {
+        player.x += 152;
+        click.play();
+    }
+    
+    dx = 23;
+    dy = 23;
+    
+    speedarray = [0.4, 0.5, 0.6, 0.7, 0.8, 0.9];
+    rand = speedarray[Math.floor(Math.random() * 5)];
+    
+    scr = 0;
+    
+    function ballMove() {
+        ball.x -= dx;
+        ball.y += dy;
+        
+        
+        computer.x -= dx;
+        if (ball.x < 0) {
+            dx = -dx;
+        }
+        
+        if (ball.crashWith(player)) {
+            
+            dx = dx;
+            dy = -dy;
+            scr += 1;
+            collide.play();
+        }
+        
+        if (ball.x + 30 > 950) {
+            dx = -dx;
+            dy = dy;
+        }
+        if (ball.y - 30 < 0) {
+            dx = dx;
+            dy = -dy;
+        }
+        
+    
+        
+        
+        if (ball.y > 1350) {
+            myGameArea.stop();
+            gameOver.text = "SCORE: " + scr;
+            gameOver.update();
+            if (myGameArea.frameNo < 3000 && myGameArea.frameNo > 1500) {
+                well.text = "Well Played!😍";
+                well.update();
+            }
+            if (myGameArea.frameNo < 500) {
+                well.text = "Bad Luck!😐";
+                well.update();
+            }
+            if (myGameArea.frameNo > 5000) {
+                well.text = "Marvellous!🎇";
+                well.update();
+            }
+            scr = 0;
+            
+            
+            
+            rest();
+            over.play();
+            music.stop();
+            wish.clear();
+        }
+        
+        if (everyinterval(30)) {
+            ball.image.src = "circle.png";
+        }
+        
+        if (everyinterval(60)) {
+            ball.image.src = "dry-clean.png";
+        }
+        
+        
+        if (myGameArea.frameNo > 2000) {
+            document.querySelector("canvas").style.backgroundColor = "Wheat";
+            
+        }
+        if (myGameArea.frameNo > 4000) {
+            document.querySelector("canvas").style.backgroundColor = "LightSteelBlue";
+            
+        }
+        if (myGameArea.frameNo > 6000) {
+            document.querySelector("canvas").style.backgroundColor = "lightseagreen";
+            
+        }
+        if (myGameArea.frameNo > 8000) {
+            document.querySelector("canvas").style.backgroundColor = "SlateGray";
+            
+        }
+        
+    }
+    
+    
+    function rest() {
+        document.getElementById("restart").style.display = "block";
+    }
+    
+    function restart() {
+        myGameArea.stop();
+        myGameArea.clear();
+        startGame();
+        document.getElementById("restart").style.display = "none";
+    }
+    
+    function startHidden() {
+        document.getElementById("start").style.display = "none";
+    }
+    
+    function bound() {
+        if (player.x < 0) {
+            player.x = 5;
+        }
+        if (player.x + 250 > 950) {
+            player.x = 700;
+        }
+    }
+    
+    function desp() {
+        document.getElementById("description").style.display = "block";
+        document.getElementById("help").style.display = "none";
+    }
+     
+    
+    function clearinc() {
+        document.getElementById("description").style.display = "none";
+        document.getElementById("help").style.display = "block";
+    }
+
+
+</script>
+<div id="gamepic">
+    <img src="pingpong.jfif"><h2>Ping Pong</h2>
+</div>
+<h1 id="start" onclick="startGame()"><img src="playy.png" width="200px" height="200px"><span id="play">Play</span></h1>
+<div id="buttons">
+    <button id="left" onclick="moveLeft()"><img src="left-arroww (1).png"></button>
+    <button id="right" onclick="moveRight()"><img src="right-arrow (1).png"> </button>
+</div>
+<div id="restart">
+<button onclick="restart()"><img src="refreshh.png" width="100px" height="100px"></button>
+</div>
+<div id="Help">
+    <h3 id="help" onclick="desp()">Help</h3>
+    <div id="description"><span class="close" onclick="clearinc()">&times;</span> ---Developer---
+        <b>SAIRAJENDRA</b><br>For Support Mail us - <i>sairajendra30@gmail.com</i>  ---About Game---<br>Table tennis, also called (trademark) Ping-Pong, ball game similar in principle to lawn tennis and played on a flat table divided into two equal courts by a net fixed across its width at the middle. The object is to hit the ball so that it goes over the net and bounces on the opponent’s half of the table in such a way that the opponent cannot reach it or return it correctly. The lightweight hollow ball is propelled back and forth across the net by small rackets (bats, or paddles) held by the players.</div>
+</div>
